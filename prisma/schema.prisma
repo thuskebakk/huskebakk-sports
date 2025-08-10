@@ -1,0 +1,78 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model League {
+  id      String   @id
+  name    String
+  sport   String
+  seasons Season[]
+}
+
+model Season {
+  id        String   @id
+  yearStart Int
+  yearEnd   Int?
+  leagueId  String
+  league    League    @relation(fields: [leagueId], references: [id])
+  teams     TeamSeason[]
+  standings StandingRow[]
+  games     Game[]
+}
+
+model Team {
+  id       String        @id
+  name     String
+  short    String?
+  leagueId String
+  seasons  TeamSeason[]
+  standings StandingRow[]
+  homeGames Game[]       @relation("HomeGames")
+  awayGames Game[]       @relation("AwayGames")
+}
+
+model TeamSeason {
+  id        String   @id @default(cuid())
+  teamId    String
+  seasonId  String
+  conference String?
+  division   String?
+  
+  team      Team     @relation(fields: [teamId], references: [id])
+  season    Season   @relation(fields: [seasonId], references: [id])
+}
+
+model StandingRow {
+  id       String  @id @default(cuid())
+  seasonId String
+  teamId   String
+  rank     Int
+  wins     Int
+  losses   Int
+  draws    Int?
+  points   Int?
+  gd       Int?
+
+  season   Season  @relation(fields: [seasonId], references: [id])
+  team     Team    @relation(fields: [teamId], references: [id])
+}
+
+model Game {
+  id          String   @id
+  seasonId    String
+  date        DateTime
+  homeTeamId  String
+  awayTeamId  String
+  status      String
+  homeScore   Int?
+  awayScore   Int?
+
+  season      Season   @relation(fields: [seasonId], references: [id])
+  homeTeam    Team     @relation("HomeGames", fields: [homeTeamId], references: [id])
+  awayTeam    Team     @relation("AwayGames", fields: [awayTeamId], references: [id])
+}
