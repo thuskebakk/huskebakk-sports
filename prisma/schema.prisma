@@ -26,25 +26,26 @@ model Season {
 }
 
 model Team {
-  id       String        @id
-  name     String
-  short    String?
-  leagueId String
-  seasons  TeamSeason[]
+  id        String @id
+  name      String
+  short     String?
+  leagueId  String
+  logoUrl   String?
+  seasons   TeamSeason[]
   standings StandingRow[]
-  homeGames Game[]       @relation("HomeGames")
-  awayGames Game[]       @relation("AwayGames")
+  homeGames Game[] @relation("HomeGames")
+  awayGames Game[] @relation("AwayGames")
 }
 
 model TeamSeason {
-  id        String   @id @default(cuid())
-  teamId    String
-  seasonId  String
+  id         String  @id @default(cuid())
+  teamId     String
+  seasonId   String
   conference String?
   division   String?
-  
-  team      Team     @relation(fields: [teamId], references: [id])
-  season    Season   @relation(fields: [seasonId], references: [id])
+
+  team   Team   @relation(fields: [teamId], references: [id])
+  season Season @relation(fields: [seasonId], references: [id])
 }
 
 model StandingRow {
@@ -58,8 +59,8 @@ model StandingRow {
   points   Int?
   gd       Int?
 
-  season   Season  @relation(fields: [seasonId], references: [id])
-  team     Team    @relation(fields: [teamId], references: [id])
+  season Season @relation(fields: [seasonId], references: [id])
+  team   Team   @relation(fields: [teamId], references: [id])
 }
 
 model Game {
@@ -72,7 +73,7 @@ model Game {
   homeScore   Int?
   awayScore   Int?
 
-  season      Season   @relation(fields: [seasonId], references: [id])
-  homeTeam    Team     @relation("HomeGames", fields: [homeTeamId], references: [id])
-  awayTeam    Team     @relation("AwayGames", fields: [awayTeamId], references: [id])
+  season   Season @relation(fields: [seasonId], references: [id])
+  homeTeam Team   @relation("HomeGames", fields: [homeTeamId], references: [id])
+  awayTeam Team   @relation("AwayGames", fields: [awayTeamId], references: [id])
 }

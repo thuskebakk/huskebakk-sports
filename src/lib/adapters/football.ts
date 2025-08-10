@@ -10,10 +10,26 @@ export const FOOTBALL_LEAGUE_IDS = {
 } as const;
 
 export async function fetchStandings(leagueKey: keyof typeof FOOTBALL_LEAGUE_IDS, season = 2024) {
-  const leagueId = FOOTBALL_LEAGUE_IDS[leagueKey];
   const res = await axios.get(`${API_BASE}/standings`, {
-    params: { league: leagueId, season },
+    params: { league: FOOTBALL_LEAGUE_IDS[leagueKey], season },
     headers: { "X-RapidAPI-Key": API_KEY, "X-RapidAPI-Host": API_HOST },
   });
   return res.data.response[0].league.standings[0] as any[];
+}
+
+export async function fetchFixtures(
+  leagueKey: keyof typeof FOOTBALL_LEAGUE_IDS,
+  opts: { season?: number; fromISO: string; toISO: string }
+) {
+  const { season = 2024, fromISO, toISO } = opts;
+  const res = await axios.get(`${API_BASE}/fixtures`, {
+    params: {
+      league: FOOTBALL_LEAGUE_IDS[leagueKey],
+      season,
+      from: fromISO, // YYYY-MM-DD
+      to: toISO,     // YYYY-MM-DD
+    },
+    headers: { "X-RapidAPI-Key": API_KEY, "X-RapidAPI-Host": API_HOST },
+  });
+  return res.data.response as any[];
 }

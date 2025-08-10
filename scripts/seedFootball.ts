@@ -1,15 +1,18 @@
+// scripts/seedFootball.ts
 import { PrismaClient } from "@prisma/client";
 import { fetchStandings } from "../src/lib/adapters/football";
 
 const prisma = new PrismaClient();
-const SEASON = 2024;
+const SEASON = 2024 as const;
 
 const META = {
-  epl:    { leagueId: "epl",    name: "English Premier League" },
+  epl: { leagueId: "epl", name: "English Premier League" },
   laliga: { leagueId: "laliga", name: "La Liga" },
 } as const;
 
-async function seedLeague(key: keyof typeof META) {
+type LeagueKey = keyof typeof META;
+
+async function seedLeague(key: LeagueKey) {
   const leagueMeta = META[key];
   const seasonId = `${SEASON}-${leagueMeta.leagueId}`;
 
@@ -22,20 +25,36 @@ async function seedLeague(key: keyof typeof META) {
   await prisma.season.upsert({
     where: { id: seasonId },
     update: {},
-    create: { id: seasonId, yearStart: SEASON, yearEnd: SEASON + 1, leagueId: leagueMeta.leagueId },
+    create: {
+      id: seasonId,
+      yearStart: SEASON,
+      yearEnd: SEASON + 1,
+      leagueId: leagueMeta.leagueId,
+    },
   });
 
   const standings = await fetchStandings(key, SEASON);
 
   for (const row of standings) {
+    const teamId = String(row.team.id);
+    const name = row.team.name as string;
+    const short = (row.team.code ?? null) as string | null;
+    const logo = (row.team.logo ?? null) as string | null;
+
     const team = await prisma.team.upsert({
-      where: { id: String(row.team.id) },
-      update: { name: row.team.name, short: row.team.code },
-      create: {
-        id: String(row.team.id),
-        name: row.team.name,
-        short: row.team.code,
+      where: { id: teamId },
+      update: {
+        name,
+        short: short ?? undefined,
         leagueId: leagueMeta.leagueId,
+        logoUrl: logo ?? undefined,
+      },
+      create: {
+        id: teamId,
+        name,
+        short,
+        leagueId: leagueMeta.leagueId,
+        logoUrl: logo,
       },
     });
 
@@ -71,4 +90,9 @@ async function main() {
   await seedLeague("laliga");
 }
 
-main().catch(console.error).finally(() => prisma.$disconnect());
+main()
+  .catch((e) => {
+    console.error(e);
+    process.exit(1);
+  })
+  .finally(() => prisma.$disconnect());
